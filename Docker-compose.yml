@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./traffic-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+
+  microservice1:
+    build:
+      context: ./inAppNotificationService
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - MONGODB_URI=mongodb+srv://ashriram:cbMfe2B168mY1hLU@cluster0.tnfbkwl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+  microservice2:
+    build:
+      context: ./messageNotificationService
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    depends_on:
+      - rabbitmq
+
+  microservice3:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=localhost
+      - POSTGRES_PASSWORD=xyz
+      - POSTGRES_DB=TrafficDB
+
+  microservice4:
+    build:
+      context: ./userProfile
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - MONGODB_URI=mongodb+srv://ashriram:cbMfe2B168mY1hLU@cluster0.tnfbkwl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: localhost
+      POSTGRES_PASSWORD: Akhilshyam1!
+      POSTGRES_DB: TrafficDB
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - microservice1
+      - microservice2
+      - microservice3
+      - microservice4
+      - frontend
